@@ -16,8 +16,8 @@
 
         <div class="input-group mb-2">
             <input class="form-control mb-2" placeholder="Domain" id="domain" value="merchansite.com" />
-            <input class="form-control mb-2" placeholder="Từ trang" style="flex:0 0 100px" id="from" value="1" />
-            <input class="form-control mb-2" placeholder="tới trang" style="flex:0 0 100px" id="total" value="50" />
+            <input class="form-control mb-2" placeholder="Từ trang" style="flex:0 0 200px" id="from" value="1" />
+            <input class="form-control mb-2" placeholder="tới trang" style="flex:0 0 200px" id="total" value="50" />
         </div>
         <input class="form-control mb-2" placeholder="Tìm kiếm, cách nhau dấu ','" id="searchs" value="" />
         <div class="text-right">
@@ -101,22 +101,22 @@
         var searchs = ($('#searchs').val() || '').split(',');
         searchs.forEach(function (s) {
             var out = dataOut[s] || [];
-            for (var i = 0; i <= Math.floor(out.length / 5000); i++) {
-                max = (i + 1) * 5000 < out.length ? (i + 1) * 5000 : out.length;
-                max = max - 1;
-                var out = out.slice(i * 5000, max);
+            // for (var i = 0; i <= Math.ceil(out.length / 5000); i++) {
+                // max = (i + 1) * 5000 < out.length ? (i + 1) * 5000 : out.length;
+                // max = max - 1;
+                // var out = out.slice(i * 5000, max);
                 var data, filename, link;
                 var csv = convertArrayOfObjectsToCSV({
                     data: out
                 });
-                console.log(csv);
+                console.log(out);
                 if (csv == null) return;
 
                 var domain = $('#domain').val();
                 var total = +$('#total').val();
                 var from = +$('#from').val();
 
-                filename = [domain, total, from, i * 5000, max, s].join('-');
+                filename = [domain, total, from, s].join('-');
                 filename = filename + '.csv';
 
                 if (!csv.match(/^data:text\/csv/i)) {
@@ -128,7 +128,7 @@
                 link.setAttribute('href', data);
                 link.setAttribute('download', filename);
                 link.click();
-            }
+            // }
         })
     }
 
