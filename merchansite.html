@@ -1,0 +1,138 @@
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container mt-2">
+        <h3>
+            <strong>
+                Lấy thông tin sản phẩm
+            </strong>
+        </h3>
+
+        <div class="input-group mb-2">
+            <input class="form-control mb-2" placeholder="Domain" id="domain" value="merchansite.com" />
+            <input class="form-control mb-2" placeholder="Từ trang" style="flex:0 0 100px" id="from" value="1" />
+            <input class="form-control mb-2" placeholder="tới trang" style="flex:0 0 100px" id="total" value="50" />
+        </div>
+        <input class="form-control mb-2" placeholder="Tìm kiếm, cách nhau dấu ','" id="searchs" value="" />
+        <div class="text-right">
+            <a tabindex="" onclick="downloadCSV()">Download CSV</a>
+            <button class="btn btn-success" id="getdata">Lấy</button>
+        </div>
+        <hr />
+        <table class="table" id="result"></table>
+    </div>
+</body>
+<script>
+    let dataOut = {};
+    $('#getdata').click(function () {
+        $('#result').html('');
+        dataOut = {};
+        var domain = $('#domain').val();
+        var total = +$('#total').val();
+        var from = +$('#from').val();
+        var searchs = ($('#searchs').val() || '').split(',');
+        var urlv = '';
+        var index = 0;
+        $('#result').append(`<tr><th>STT</th><th>Từ tk</th> <th>Link<th> </tr>`)
+        searchs.forEach(function (s) {
+            for (i = from; i <= total; i++) {
+                const serviceUrl = 'https://' + domain + '/api/product/products/search?page=' + i + '&limit=20';
+                $.ajax({
+                    url: serviceUrl,
+                    type: 'post',
+                    data: JSON.stringify({ term: s }),
+                    headers: {
+                        'Content-Type': "application/json"
+                    },
+                    success: function (res) {
+                        var data = res.data.products;
+                        data.forEach(function (item) {
+                            urlv = `https://${domain}/${item.slug}`;
+                            dataOut[s] = dataOut[s] || [];
+                            dataOut[s].push({
+                                url: urlv,
+                            })
+                            index = index + 1;
+                            $('#result').append(`<tr><td>${index}</td><td>${s}</td> <td><a href="${urlv}">${item.title} </a><td> </tr>`)
+                        })
+                    }
+                })
+            }
+        })
+    })
+
+    function convertArrayOfObjectsToCSV(args) {
+        var result, ctr, keys, columnDelimiter, lineDelimiter, data;
+
+        data = args.data || null;
+        if (data == null || !data.length) {
+            return null;
+        }
+
+        columnDelimiter = args.columnDelimiter || ',';
+        lineDelimiter = args.lineDelimiter || '\n';
+
+        keys = Object.keys(data[0]);
+
+        result = '';
+        result += keys.join(columnDelimiter);
+        result += lineDelimiter;
+
+        data.forEach(function (item) {
+            ctr = 0;
+            keys.forEach(function (key) {
+                if (ctr > 0) result += columnDelimiter;
+
+                result += item[key];
+                ctr++;
+            });
+            result += lineDelimiter;
+        });
+
+        return result;
+    }
+    function downloadCSV(args) {
+        var searchs = ($('#searchs').val() || '').split(',');
+        searchs.forEach(function (s) {
+            var out = dataOut[s] || [];
+            for (var i = 0; i <= Math.floor(out.length / 5000); i++) {
+                max = (i + 1) * 5000 < out.length ? (i + 1) * 5000 : out.length;
+                max = max - 1;
+                var out = out.slice(i * 5000, max);
+                var data, filename, link;
+                var csv = convertArrayOfObjectsToCSV({
+                    data: out
+                });
+                console.log(csv);
+                if (csv == null) return;
+
+                var domain = $('#domain').val();
+                var total = +$('#total').val();
+                var from = +$('#from').val();
+
+                filename = [domain, total, from, i * 5000, max, s].join('-');
+                filename = filename + '.csv';
+
+                if (!csv.match(/^data:text\/csv/i)) {
+                    csv = 'data:text/csv;charset=utf-8,' + csv;
+                }
+                data = encodeURI(csv);
+
+                link = document.createElement('a');
+                link.setAttribute('href', data);
+                link.setAttribute('download', filename);
+                link.click();
+            }
+        })
+    }
+
+
+</script>
+
+</html>
